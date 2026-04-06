@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { jsPDF } from 'jspdf'
 import { useHistoryStore } from '../store/historyStore'
 
 export function CertificatePage() {
@@ -11,43 +10,74 @@ export function CertificatePage() {
 
   const generate = () => {
     if (!best) return
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
-    const w = doc.internal.pageSize.getWidth()
-    const h = doc.internal.pageSize.getHeight()
+    const popup = window.open('', '_blank', 'width=1200,height=800')
+    if (!popup) return
 
-    doc.setFillColor(15, 23, 42)
-    doc.rect(0, 0, w, h, 'F')
+    const safeName = name || 'Your Name'
+    const safeFileName = `TypingPro-Certificate-${safeName.replaceAll(' ', '_')}`
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${safeFileName}</title>
+    <style>
+      @page { size: A4 landscape; margin: 0; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #0f172a;
+        color: #ffffff;
+        font-family: Inter, Arial, sans-serif;
+        display: grid;
+        place-items: center;
+      }
+      .certificate {
+        width: 100%;
+        max-width: 1100px;
+        height: min(100vh, 760px);
+        border: 2px solid #334155;
+        padding: 64px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        text-align: center;
+      }
+      .title { font-size: 48px; font-weight: 700; }
+      .subtitle { font-size: 24px; color: #cbd5e1; }
+      .name { font-size: 56px; font-weight: 700; }
+      .score { font-size: 28px; }
+      .meta { font-size: 18px; color: #94a3b8; }
+      .footer { margin-top: 28px; font-size: 14px; color: #94a3b8; }
+      @media print {
+        body { width: auto; height: auto; }
+        .certificate { width: 100vw; height: 100vh; max-width: none; border: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="certificate">
+      <div class="title">Certificate of Typing Achievement</div>
+      <div class="subtitle">This certifies that</div>
+      <div class="name">${safeName}</div>
+      <div class="score">achieved ${best.wpm} WPM with ${best.accuracy}% accuracy</div>
+      <div class="meta">Mode: ${best.mode} · Difficulty: ${best.difficulty}</div>
+      <div class="footer">Made With I Love Typing</div>
+    </div>
+    <script>
+      window.onload = () => {
+        window.print();
+      };
+    </script>
+  </body>
+</html>`
 
-    doc.setTextColor(255, 255, 255)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(36)
-    doc.text('Certificate of Typing Achievement', w / 2, 120, { align: 'center' })
-
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(18)
-    doc.text('This certifies that', w / 2, 180, { align: 'center' })
-
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(32)
-    doc.text(name, w / 2, 230, { align: 'center' })
-
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(16)
-    doc.text(
-      `achieved ${best.wpm} WPM with ${best.accuracy}% accuracy`,
-      w / 2,
-      280,
-      { align: 'center' },
-    )
-
-    doc.setTextColor(148, 163, 184)
-    doc.setFontSize(12)
-    doc.text(`Mode: ${best.mode} · Difficulty: ${best.difficulty}`, w / 2, 320, {
-      align: 'center',
-    })
-    doc.text(`Made With I Love Typing`, w / 2, h - 80, { align: 'center' })
-
-    doc.save(`TypingPro-Certificate-${name.replaceAll(' ', '_')}.pdf`)
+    popup.document.open()
+    popup.document.write(html)
+    popup.document.close()
   }
 
   return (
